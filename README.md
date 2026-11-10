@@ -105,6 +105,13 @@ The [demo guide](docs/demo.md) provides a two-minute walkthrough.
 
 ## Tests
 
+[GitHub Actions CI](.github/workflows/ci.yml) runs on pushes and pull requests,
+with a manual trigger available. It checks formatting, vet, race-enabled tests,
+build, and the self-checking demo on Linux with Go 1.22.x and the current stable
+Go release. The stable job also repeats wallet tests 20 times. The workflow
+uses read-only repository permissions and needs no secrets or external services.
+Its first hosted result will be available after the workflow is pushed.
+
 | Test | Evidence |
 |---|---|
 | TestConcurrentBudgetAndConflicts | Exactly 10 of 50 concurrent 5-USDC sends fit a 50-USDC balance |

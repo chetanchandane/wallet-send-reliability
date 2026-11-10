@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Go ${{ matrix.go }} / Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ['1.22.x', 'stable']
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go }}
+          cache: false
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          unformatted="$(gofmt -l cmd internal)"
+          if [[ -n "$unformatted" ]]; then
+            echo "Run make fmt on these files:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet and race-enabled tests
+        run: make check
+
+      - name: Build
+        run: make build
+
+      - name: Run self-checking demo
+        run: make demo
+
+      - name: Repeat wallet reliability tests
+        if: matrix.go == 'stable'
+        run: make race
